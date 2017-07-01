@@ -16,17 +16,7 @@
 
 %% API
 
-%% Explicit Identify
-%%
-%% Get explicit image characteristics in a list to be parsed by proplists:get_value
-%%
-%% Example:
-%%
-%%    identify_explicit("my.jpg", [filename, width, height, type]}).
-%%
-%% Which returns a map of characteristics to be retrived with maps:get
-%%
-
+%% Explicit Identify (available options: filename, width, height, type)
 -spec identify_explicit(File :: file:filename_all(), Options :: [term()]) ->
     {'ok', Props :: maps:map()} | {'error', Reason :: atom()}.
 
@@ -36,10 +26,15 @@ identify_explicit(File, Options) ->
         {file, stringify(File)},
         {format_string, identify_format_string(Options)}
     ],
-    Result = os:cmd("gm " ++ bind_data(Template, TemplateOpts, [escape])),
-    case cmd_error(Result) of
-        {error, Reason} -> {error, Reason};
-        no_error -> parse_identify_explicit(Result)
+    case gm_util:exec_cmd("gm " ++ bind_data(Template, TemplateOpts, [escape])) of
+        {ExitCode, Result} when ExitCode =/= 0 ->
+            Reason = case cmd_error(Result) of
+                no_error -> file_not_found;
+                R -> R
+            end,
+            {error, Reason};
+        {0, Result} ->
+            {ok, parse_identify_explicit(Result)}
     end.
 
 %% Identify
@@ -51,7 +46,10 @@ identify(File, Options) ->
 %% Composite
 composite(File, BaseFile, Converted, Options) ->
     Template = "composite {{options}} :input_file :output_file",
-    TemplateOpts = [{input_file, File ++ "\" \"" ++ BaseFile}, {output_file, Converted}],
+    TemplateOpts = [
+        {input_file, stringify(File) ++ "\" \"" ++ stringify(BaseFile)},
+        {output_file, stringify(Converted)}
+    ],
     exec_cmd(Template, TemplateOpts, Options).
 
 %% Convert
@@ -63,19 +61,25 @@ convert(File, Converted, Options) ->
 
 convert(File, Converted, Options, OutputOptions) ->
     Template = "convert {{options}} :input_file {{output_options}} :output_file",
-    TemplateOpts = [{input_file, File}, {output_file, Converted}],
+    TemplateOpts = [
+        {input_file, stringify(File)},
+        {output_file, stringify(Converted)}
+    ],
     exec_cmd(Template, TemplateOpts, Options, OutputOptions).
 
 %% Mogrify
 mogrify(File, Options) ->
     Template = "mogrify {{options}} :file",
-    TemplateOpts = [{file, File}],
+    TemplateOpts = [{file, stringify(File)}],
     exec_cmd(Template, TemplateOpts, Options).
 
 %% Montage
 montage(Files, Converted, Options) ->
     Template = "montage {{options}} :input_file :output_file",
-    TemplateOpts = [{input_file, string:join(Files, "\" \"")}, {output_file, Converted}],
+    TemplateOpts = [
+        {input_file, string:join([stringify(File) || File <- Files], "\" \"")},
+        {output_file, stringify(Converted)}
+    ],
     exec_cmd(Template, TemplateOpts, Options).
 
 %% Version
@@ -105,11 +109,12 @@ exec_cmd(Template, ExtraOptions, Options, OutputOptions) ->
 %% Create a format string from the passed in options
 identify_format_string(Options) ->
     Parts = [kv_string(Option) || Option <- Options],
-    string:join(Parts, "--SEP--").
+    string:join(Parts, "--SEP--") ++ "\n".
 
 %% Parse the result of the identify command using "explicit"
 parse_identify_explicit(Str) ->
-    Stripped = re:replace(Str, "\r", "", [{return, list}]),
+    [Str1|_] = re:split(Str, "\n", [{return, list}]),
+    Stripped = re:replace(Str1, "\r", "", [{return, list}]),
     Stripped1 = re:replace(Stripped, "\n", "", [{return, list}]),
     FormatParts = re:split(Stripped1, "--SEP--", [{return, list}]),
     ParsedParts = [part_to_tuple(X) || X <- FormatParts],
