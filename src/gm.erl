@@ -1,5 +1,3 @@
-%%% Functions for interacting with GraphicsMagick
-
 -module(gm).
 
 -export([
@@ -27,37 +25,47 @@ identify_explicit(File, Options) ->
         {format_string, identify_format_string(Options)}
     ],
     case gm_util:exec_cmd("gm " ++ bind_data(Template, TemplateOpts, [escape])) of
-        {ExitCode, Result} when ExitCode =/= 0 ->
-            Reason = case cmd_error(Result) of
-                no_error -> file_not_found;
-                R -> R
-            end,
-            {error, Reason};
-        {0, Result} ->
-            {ok, parse_identify_explicit(Result)}
+        {0, Result} -> {ok, parse_identify_explicit(Result)};
+        {_, Result} -> cmd_error(Result)
     end.
 
 %% Identify
+-spec identify(File :: file:filename_all(), Options :: [term()]) ->
+    {'ok', Result :: string()} | {'error', Reason :: atom()}.
+
 identify(File, Options) ->
     Template = "identify {{options}} :file",
     TemplateOpts = [{file, stringify(File)}],
     exec_cmd(Template, TemplateOpts, Options).
 
 %% Composite
+-spec composite(File :: file:filename_all(), BaseFile :: file:filename_all(), Converted :: file:filename_all(), Options :: [term()]) ->
+    'ok' | {'error', Reason :: atom()}.
+
 composite(File, BaseFile, Converted, Options) ->
     Template = "composite {{options}} :input_file :output_file",
     TemplateOpts = [
         {input_file, stringify(File) ++ "\" \"" ++ stringify(BaseFile)},
         {output_file, stringify(Converted)}
     ],
-    exec_cmd(Template, TemplateOpts, Options).
+    Result = exec_cmd(Template, TemplateOpts, Options),
+    omit_output(Result).
 
 %% Convert
+-spec convert(File :: file:filename_all(), Converted :: file:filename_all()) ->
+    'ok' | {'error', Reason :: atom()}.
+
 convert(File, Converted) ->
     convert(File, Converted, [], []).
 
+-spec convert(File :: file:filename_all(), Converted :: file:filename_all(), Options :: [term()]) ->
+    'ok' | {'error', Reason :: atom()}.
+
 convert(File, Converted, Options) ->
     convert(File, Converted, Options, []).
+
+-spec convert(File :: file:filename_all(), Converted :: file:filename_all(), Options :: [term()], OutputOptions :: [term()]) ->
+    'ok' | {'error', Reason :: atom()}.
 
 convert(File, Converted, Options, OutputOptions) ->
     Template = "convert {{options}} :input_file {{output_options}} :output_file",
@@ -65,35 +73,45 @@ convert(File, Converted, Options, OutputOptions) ->
         {input_file, stringify(File)},
         {output_file, stringify(Converted)}
     ],
-    exec_cmd(Template, TemplateOpts, Options, OutputOptions).
+    Result = exec_cmd(Template, TemplateOpts, Options, OutputOptions),
+    omit_output(Result).
 
 %% Mogrify
+-spec mogrify(File :: file:filename_all(), Options :: [term()]) ->
+    'ok' | {'error', Reason :: atom()}.
+
 mogrify(File, Options) ->
     Template = "mogrify {{options}} :file",
     TemplateOpts = [{file, stringify(File)}],
-    exec_cmd(Template, TemplateOpts, Options).
+    Result = exec_cmd(Template, TemplateOpts, Options),
+    omit_output(Result).
 
 %% Montage
+-spec montage(Files :: [file:filename_all(), ...], Converted :: file:filename_all(), Options :: [term()]) ->
+    'ok' | {'error', Reason :: atom()}.
+
 montage(Files, Converted, Options) ->
     Template = "montage {{options}} :input_file :output_file",
     TemplateOpts = [
         {input_file, string:join([stringify(File) || File <- Files], "\" \"")},
         {output_file, stringify(Converted)}
     ],
-    exec_cmd(Template, TemplateOpts, Options).
+    Result = exec_cmd(Template, TemplateOpts, Options),
+    omit_output(Result).
 
 %% Version
+-spec version() ->
+    {'ok', Version :: string()} | {'error', Reason :: atom()}.
+
 version() ->
-    Template = "version",
-    exec_cmd(Template).
+    case exec_cmd("version", [], []) of
+        {ok, Version} -> {ok, parse_version(Version)};
+        {error, Reason} -> {error, Reason}
+    end.
 
 %% Internal functions
 
-%% Run an os:cmd based on a template without options
-exec_cmd(Template) ->
-    os:cmd(lists:concat(["gm ", Template])).
-
-%% Run an os:cmd based on a template and passed in options
+%% Run a command based on a template and passed in options
 exec_cmd(Template, ExtraOptions, Options) ->
     exec_cmd(Template, ExtraOptions, Options, []).
 
@@ -103,8 +121,8 @@ exec_cmd(Template, ExtraOptions, Options, OutputOptions) ->
     PreParsed = bind_data(Template, ExtraOptions, [escape]),
     CmdString = re:replace(PreParsed, "{{options}}", OptString, [{return, list}]),
     Command = re:replace(CmdString, "{{output_options}}", OutOptString, [{return, list}]),
-    Cmd = os:cmd(lists:concat(["gm ", Command])),
-    parse_result(Cmd).
+    Result = gm_util:exec_cmd(lists:concat(["gm ", Command])),
+    parse_result(Result).
 
 %% Create a format string from the passed in options
 identify_format_string(Options) ->
@@ -176,20 +194,19 @@ stringify(Binary) when is_binary(Binary) ->
 stringify(Value) ->
     Value.
 
-%% Parse an error coming from an executed os:cmd
-cmd_error(Cmd) ->
+%% Parse an error coming from an executed command
+cmd_error(Msg) ->
     Errors = [
         {"command not found", command_not_found},
         {"No such file", file_not_found},
         {"Request did not return an image", no_image_returned},
         {"unable to open image", unable_to_open}
     ],
-    parse_error(Cmd, Errors).
+    parse_error(Msg, Errors).
 
 %% Run through each error, checking for a match.
-%% Return `no_error` when there are no more possibilities.
 parse_error(_, []) ->
-    no_error;
+    {error, unknown_error};
 parse_error(Cmd, [{ErrorDescription, Error}|Errors]) ->
     case re:run(Cmd, ErrorDescription) of
         {match, _} -> {error, Error};
@@ -198,12 +215,17 @@ parse_error(Cmd, [{ErrorDescription, Error}|Errors]) ->
 
 %% Return ok if successful, otherwise return a useful error
 parse_result(Result) ->
-    case cmd_error(Result) of
-        {error, Msg} ->
-            {error, Msg};
-        no_error ->
-            case Result of
-                [] -> ok;
-                Msg -> {error, Msg}
-            end
+    case Result of
+        {0, Msg} -> {ok, Msg};
+        {_, Msg} -> cmd_error(Msg)
     end.
+
+parse_version(Str) ->
+    case string:str(Str, " http://") of
+        0 -> Str;
+        Index -> string:substr(Str, 1, Index - 1)
+    end.
+
+omit_output(ok) -> ok;
+omit_output({ok, _}) -> ok;
+omit_output(Other) -> Other.
