@@ -64,6 +64,7 @@ gm:version
 
 ```
 -adjoin
+-auto-orient
 -background
 -blur
 -create_directories
