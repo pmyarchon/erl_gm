@@ -138,4 +138,10 @@ opt({watermark, Width, Height}) ->
         {height, Height}
     ]};
 opt(auto_orient) ->
-    {"-auto-orient"}.
+    {"-auto-orient"};
+opt({'+profile', Profile}) ->
+    {"+profile", ":profile", [
+        {profile, Profile}
+    ]};
+opt(strip) ->
+    {"-strip"}.
