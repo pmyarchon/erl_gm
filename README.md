@@ -2,7 +2,7 @@
 
 An Erlang GraphicsMagick wrapper
 
-## USAGE
+## Erlang usage
 
 ```erlang
 % Crop image into 100x100 tiles
@@ -25,7 +25,7 @@ gm:convert("/some/image.jpg", "/something/crazy.jpg", [
 gm:convert("/some/image.jpg", "/something/resized.jpg", [{resize, 240, 240}]).
 ```
 
-## ELIXIR INSTALLATION
+## Elixir installation
 
 Add erl_gm to your `mix.exs` dependencies:
 
@@ -43,13 +43,13 @@ def application do
 end
 ```
 
-## ELIXIR USAGE
+## Elixir usage
 
 ```elixir
 iex> :gm.convert('/some/image.jpg', '/some/cropped.jpg', [{:crop, 100, 100}])
 ```
 
-## AVAILABLE GM FUNCTIONS
+## Availavle GM functions
 
 ```
 gm:composite
@@ -60,7 +60,7 @@ gm:montage
 gm:version
 ```
 
-## AVAILABLE GM OPTIONS
+## Availavle GM options
 
 ```
 -adjoin
@@ -97,16 +97,16 @@ gm:version
 -watermark
 ```
 
-## AVAILABLE SHORTCUTS
+## Available shortcut functions
 
 ```
 gm:identify_explicit
 ```
 
-## EXTENDING
+## Extending
 
 New options can be added to `gm_options.erl` to broaden option support. Just open a pull request and I'll merge in additions.
 
-## LICENSE
+## License
 
 MIT
