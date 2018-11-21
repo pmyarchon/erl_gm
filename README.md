@@ -49,7 +49,7 @@ end
 iex> :gm.convert('/some/image.jpg', '/some/cropped.jpg', [{:crop, 100, 100}])
 ```
 
-## Availavle GM functions
+## Available GM functions
 
 ```
 gm:composite
