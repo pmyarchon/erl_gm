@@ -31,7 +31,7 @@ Add erl_gm to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
-  [{:gm, git: "https://github.com/nuex/erl_gm"}]
+  [{:gm, git: "https://github.com/pmyarchon/erl_gm"}]
 end
 ```
 
