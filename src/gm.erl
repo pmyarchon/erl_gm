@@ -68,7 +68,10 @@ convert(File, Converted, Options) ->
     'ok' | {'error', Reason :: atom()}.
 
 convert(File, Converted, Options, OutputOptions) ->
-    Template = "convert {{options}} :input_file {{output_options}} :output_file",
+    Template = case File of
+        "" -> "convert {{options}} {{output_options}} :output_file";
+        _ -> "convert {{options}} :input_file {{output_options}} :output_file"
+    end,
     TemplateOpts = [
         {input_file, stringify(File)},
         {output_file, stringify(Converted)}
@@ -187,6 +190,8 @@ bind_data(Template, [], _Options) ->
 %% Convert the given value to a string
 stringify(Int) when is_integer(Int) ->
     integer_to_list(Int);
+stringify(Float) when is_float(Float) ->
+    io_lib:format("~.1f", [Float]);
 stringify(Atom) when is_atom(Atom) ->
     atom_to_list(Atom);
 stringify(Binary) when is_binary(Binary) ->
@@ -205,7 +210,7 @@ cmd_error(Msg) ->
     parse_error(Msg, Errors).
 
 %% Run through each error, checking for a match.
-parse_error(_, []) ->
+parse_error(_Err, []) ->
     {error, unknown_error};
 parse_error(Cmd, [{ErrorDescription, Error}|Errors]) ->
     case re:run(Cmd, ErrorDescription) of
