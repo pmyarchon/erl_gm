@@ -60,7 +60,7 @@ gm:montage
 gm:version
 ```
 
-## Availavle GM options
+## Available GM options
 
 ```
 +adjoin
