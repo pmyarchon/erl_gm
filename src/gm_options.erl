@@ -11,6 +11,8 @@ opt('+adjoin') ->
     {"+adjoin"};
 opt(adjoin) ->
     {"-adjoin"};
+opt(auto_orient) ->
+    {"-auto-orient"};
 opt({background, Color}) ->
     {"-background", ":color", [{color, Color}]};
 opt({blur, Radius, Sigma}) ->
@@ -18,6 +20,8 @@ opt({blur, Radius, Sigma}) ->
         {radius, Radius},
         {sigma, Sigma}
     ]};
+opt({compose, Operator}) ->
+    {"-compose", ":operator", [{operator, Operator}]};
 opt(create_directories) ->
     {"-create-directories"};
 opt({crop, Width, Height}) ->
@@ -68,6 +72,8 @@ opt({fill, Color}) ->
     {"-fill", ":color", [{color, Color}]};
 opt(flip) ->
     {"-flip"};
+opt({font, Font}) ->
+    {"-font", ":font", [{font, Font}]};
 opt({format, Format}) ->
     {"-format", ":format", [{format, Format}]};
 opt({geometry, Width, Height}) ->
@@ -95,22 +101,46 @@ opt({geometry, Width, Height, XOffset, YOffset, ResizeOption}) ->
     ]};
 opt({gravity, Gravity}) ->
     {"-gravity", ":gravity", [{gravity, Gravity}]};
+opt({implode, Factor}) ->
+    {"-implode", ":factor", [{factor, Factor}]};
 opt({interlace, Interlace}) ->
     {"-interlace", ":interlace", [{interlace, Interlace}]};
+opt({label, Text}) ->
+    {"label:\"" ++ Text ++ "\""};
 opt(magnify) ->
     {"-magnify"};
 opt('+matte') ->
     {"+matte"};
 opt(matte) ->
     {"-matte"};
+opt({median, Radius}) ->
+    {"-median", ":radius", [{radius, Radius}]};
 opt(negate) ->
     {"-negate"};
 opt({opaque, Color}) ->
     {"-opaque", ":color", [{color, Color}]};
 opt({output_directory, Dir}) ->
     {"-output-directory", ":output_directory", [{output_directory, Dir}]};
+opt({pattern, Pattern}) ->
+    {"PATTERN:" ++ Pattern};
+opt({pointsize, Value}) ->
+    {"-pointsize", ":value", [{value, Value}]};
+opt({'+profile', Profile}) ->
+    {"+profile", ":profile", [
+        {profile, Profile}
+    ]};
 opt({quality, Quality}) ->
     {"-quality", ":quality", [{quality, Quality}]};
+opt({'+raise', Width, Height}) ->
+    {"+raise", ":widthx:height", [
+        {width, Width},
+        {height, Height}
+    ]};
+opt({raise , Width, Height}) ->
+    {"-raise", ":widthx:height", [
+        {width, Width},
+        {height, Height}
+    ]};
 opt({resize, Width, Height}) ->
     {"-resize", ":widthx:height", [
         {width, Width},
@@ -118,13 +148,26 @@ opt({resize, Width, Height}) ->
     ]};
 opt({rotate, Degrees}) ->
     {"-rotate", ":degrees", [{degrees, Degrees}]};
+opt({sharpen, Radius}) ->
+    {"-sharpen", ":radius", [{radius, Radius}]};
+opt({sharpen, Radius, Sigma}) ->
+    {"-sharpen", ":radiusx:sigma", [
+        {radius, Radius},
+        {sigma, Sigma}
+    ]};
 opt({size, Width, Height}) ->
     {"-size", ":widthx:height", [
         {width, Width},
         {height, Height}
     ]};
+opt({spread, Amount}) ->
+    {"-spread", ":amount", [{amount, Amount}]};
+opt(strip) ->
+    {"-strip"};
+opt({swirl, Degrees}) ->
+    {"-swirl", ":degrees", [{degrees, Degrees}]};
 opt({thumbnail, Width, Height}) ->
-    {"-thumbnail", ":widthx:height^", [
+    {"-thumbnail", ":widthx:height", [
         {width, Width},
         {height, Height}
     ]};
@@ -137,11 +180,8 @@ opt({watermark, Width, Height}) ->
         {width, Width},
         {height, Height}
     ]};
-opt(auto_orient) ->
-    {"-auto-orient"};
-opt({'+profile', Profile}) ->
-    {"+profile", ":profile", [
-        {profile, Profile}
-    ]};
-opt(strip) ->
-    {"-strip"}.
+opt({wave, Amplitude, WaveLength}) ->
+    {"-wave", ":amplitudex:wave_length", [
+        {amplitude, Amplitude},
+        {wave_length, WaveLength}
+    ]}.

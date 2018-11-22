@@ -63,10 +63,12 @@ gm:version
 ## Availavle GM options
 
 ```
++adjoin
 -adjoin
 -auto-orient
 -background
 -blur
+-compose
 -create_directories
 -crop
 -define
@@ -77,24 +79,38 @@ gm:version
 -flatten
 -fill
 -flip
+-font
 -format
 -geometry
 -gravity
+-implode
 -interlace
 -magnify
 +matte
 -matte
+-median
 -negate
 -opaque
 -output_directory
+-pointsize
++profile
 -quality
++raise
+-raise
 -resize
 -rotate
+-sharpen
 -size
--transparent
+-spread
+-strip
+-swirl
 -thumbnail
+-transparent
 -type
 -watermark
+-wave
+label
+PATTERN
 ```
 
 ## Available shortcut functions
@@ -102,10 +118,6 @@ gm:version
 ```
 gm:identify_explicit
 ```
-
-## Extending
-
-New options can be added to `gm_options.erl` to broaden option support. Just open a pull request and I'll merge in additions.
 
 ## License
 
