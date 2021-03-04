@@ -203,6 +203,7 @@ stringify(Value) ->
 cmd_error(Msg) ->
     Errors = [
         {"command not found", command_not_found},
+        {"gm: not found", command_not_found},
         {"No such file", file_not_found},
         {"Request did not return an image", no_image_returned},
         {"unable to open image", unable_to_open}
