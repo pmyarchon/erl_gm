@@ -10,7 +10,7 @@
     {ExitCode :: integer(), Output :: string()}.
 
 exec_cmd(Command) ->
-    Port = open_port({spawn, Command}, [stream, in, eof, hide, exit_status]),
+    Port = open_port({spawn, Command}, [stream, in, eof, hide, stderr_to_stdout, exit_status]),
     get_data(Port, []).
 
 %% Internal function
